@@ -3,12 +3,14 @@ typedef struct CPUStats {
     struct CPUStats *next;
 } CPUStats;
 
-CPUStats *inicialize_cpu_stats();
+CPUStats *initialize_cpu_stats();
 
-CPUStats* atribuite_cpu_stats(char *file, CPUStats **stats); // parses first 7 fields of /proc/stat's "cpu" line, in name_list's order
+CPUStats* parse_cpu_stats(const char *file, CPUStats **stats); // parses first 7 fields of /proc/stat's "cpu" line, in name_list's order
 
-void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2); // returns fraction [0,1]; stats2 must be a later sample than stats1, same field order
+void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results); // returns fraction [0,1]; stats2 must be a later sample than stats1, same field order
 
-void print_stats(CPUStats *stats); 
+void print_cpu_usage(float *results, int total);
 
-void free_stats(CPUStats *stats);
+void print_cpu_stats_debug(CPUStats *stats); 
+
+void free_cpu_stats_list(CPUStats *stats);

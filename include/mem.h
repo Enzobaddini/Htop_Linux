@@ -1,5 +1,15 @@
-long long* get_memory_info(long long *mem_info, char *file);
+enum MemoryInfoIndex{
+    MEM_TOTAL,
+    MEM_AVAILABLE,
+    MEM_BUFFERS,
+    MEM_CACHED,
+    SWAP_TOTAL,
+    SWAP_FREE,
+    MEM_INFO_COUNT
+}; 
 
-void memory_used(long long* mem_info);
+long long* parse_memory_info(long long *mem_info, const char *file);
 
-void memory_information(long long* mem_info);
+void print_main_memory_usage(long long* mem_info);
+
+void print_swap_and_cache_info(long long* mem_info);
