@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "cpu.h"
+#include "mem.h"
 
 int main(int argc, char *argv[]) {
     
@@ -19,6 +20,10 @@ int main(int argc, char *argv[]) {
     free_stats(stats);
     free_stats(stats2);
     
+    long long mem_info[6];
+    get_memory_info(mem_info, "/proc/meminfo");
+    memory_used(mem_info);
+    memory_information(mem_info);
 
     return 0;
 }

@@ -20,7 +20,7 @@ CPUStats* atribuite_cpu_stats(char *file, CPUStats **stats) {
     
     CPUStats *tail = NULL;
    
-    char line[100];
+    char line[256];
 
     while (fgets(line, sizeof(line), fp) != NULL) {
         if (strncmp(line, "cpu", 3) != 0){ //if the line does not start with "cpu", stop the search.
@@ -79,11 +79,23 @@ void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2) {
     delta_idle = idle2 - idle1; 
     delta_total = total2 - total1;
     
-    printf("CPU%d %.2f\n", count++, ((float) (delta_total - delta_idle) / delta_total)*100);
-    aux1 = aux1->next;
-    aux2 = aux2->next;
+    if (count == 0){
+        printf("CPU Total %.2f%%\n", ((float) (delta_total - delta_idle) / delta_total) * 100);
+        count++;
+    } 
+    
+    else {
+        printf("CPU %d (%.2f%%) ", count, ((float) (delta_total - delta_idle) / delta_total) * 100);
+        if (count % 3 == 0) printf("\n");
+        count++;
     }
     
+    aux1 = aux1->next;
+    aux2 = aux2->next;
+    
+    }
+
+    printf("\n");
 
 }
 
