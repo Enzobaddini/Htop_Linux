@@ -3,10 +3,11 @@
 #include <unistd.h>
 #include "cpu.h"
 #include "mem.h"
+#include "pid.h"
 
 int main(int argc, char *argv[]) {
     
-    CPUStats *stats = initialize_cpu_stats();
+    /* CPUStats *stats = initialize_cpu_stats();
     stats = parse_cpu_stats("/proc/stat", &stats);
     if (stats == NULL) {
         return EXIT_FAILURE;
@@ -37,7 +38,11 @@ int main(int argc, char *argv[]) {
     long long mem_info[MEM_INFO_COUNT];
     parse_memory_info(mem_info, "/proc/meminfo");
     print_main_memory_usage(mem_info);
-    print_swap_and_cache_info(mem_info);
+    print_swap_and_cache_info(mem_info); */
 
+    
+    PidList* list_pids = parse_pid("/proc");
+    debug(list_pids);
+    free_pid_list(list_pids);
     return 0;
 }
