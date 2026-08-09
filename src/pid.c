@@ -69,14 +69,6 @@ PidList* parse_pid(const char* file) {
 }
 
 
-void debug(PidList* values){
-    if (values == NULL) return;
-    PidList* aux = values;
-    for(int i = 0; i < aux->count; i++){
-        printf("%d\n", aux->pid[i]);
-    }
-}
-
 void free_pid_list(PidList* values) {
     if (values != NULL) {
         if (values->pid != NULL){

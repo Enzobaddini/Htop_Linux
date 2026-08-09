@@ -32,25 +32,23 @@ CPUStats* parse_cpu_stats(const char *file, CPUStats **stats) {
             fprintf(stderr, "Memory allocation failed\n");
             exit(1);
         }
+        int parsed;
         new->next = NULL;
 
         if(strncmp(line, "cpu ", 4) == 0){ //if the line has "cpu " (with a space), it is the first line, which contains the total CPU usage.
-            if (sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq) != 7) {
-                fprintf(stderr, "Invalid format. \n");
-            }
-
-            else sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq);
-
+            parsed = sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq);
         }
-        else {
-             //if the line has "cpu" followed by a number, it is a specific CPU core.
-            if (sscanf(line, "%*s %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq) != 7){
-                fprintf(stderr, "Invalid format. \n");
-            }
+        else { //if the line has "cpu" followed by a number, it is a specific CPU core.
+            parsed = sscanf(line, "%*s %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq);
 
-            else sscanf(line, "%*s %llu %llu %llu %llu %llu %llu %llu", &new->user, &new->nice, &new->system, &new->idle, &new->iowait, &new->irq, &new->softirq);
         }
         
+        if (parsed != 7) {
+            fprintf(stderr, "Invalid format.\n");
+            free(new);
+            continue;
+        }
+
 
         if (*stats == NULL) {
             *stats = new;

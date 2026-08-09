@@ -6,8 +6,7 @@
 long long* parse_memory_info(long long *mem_info, const char *file){
     FILE *fp = fopen(file, "r");
     if (fp == NULL){
-        perror("Error opening file");
-        exit(1);
+        return NULL;
     }
     char line[256];
     while(fgets(line, sizeof(line), fp) != NULL) {

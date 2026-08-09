@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "process.h"
 
 Hash* create_hash_map(int size){
@@ -10,24 +11,104 @@ Hash* create_hash_map(int size){
         exit(1);
     }
     hash->size = size;
-    hash->buckets = (Process*)malloc(sizeof(Process)*hash->size);
+    hash->buckets = (Process**)malloc(sizeof(Process*)*hash->size);
     if (hash->buckets == NULL) {
         perror("Error alocating hash buckets struct");
         free(hash);
         exit(1);
     }
-    for (int i = 0; i <hash->size; i++) {
+    for (int i = 0; i < hash->size; i++) {
         hash->buckets[i] = NULL;
     }
 
     return hash;
 }
 
+Process* parse_process(int pid){
+    
+    char arq1[64] = "/proc/";
+    snprintf(arq1, sizeof(arq1), "/proc/%d/stat", pid);
+
+    FILE* fp = fopen(arq1, "r");
+    if (fp == NULL){
+        return NULL;
+    }
+    char line[256];
+    if(fgets(line, sizeof(line), fp) == NULL) {
+        fclose(fp);
+        return NULL;
+    }
+
+    Process* data = (Process*)malloc(sizeof(Process));
+    if (data == NULL) {
+        perror("Error allocating memory for Process struct");
+        fclose(fp);
+        exit(1);
+    }
+    
+    sscanf(line, "%d", &data->pid);
+    char* first_paren = strchr(line, '(');
+    char* last_paren = strrchr(line, ')');
+    
+    if (first_paren == NULL || last_paren == NULL) {
+        fclose(fp);
+        free(data);
+        return NULL;
+    }
+    
+    int size_name = last_paren - first_paren - 1;
+    strncpy(data->name, first_paren + 1, size_name);
+    data->name[size_name] = '\0';
+
+    char* rest = last_paren + 2;
+    int field = 3;
+
+    char*token = strtok(rest, " ");
+
+    while(token != NULL){
+        switch(field){
+            case 3:
+                data->state = token[0];
+                break;
+            case 4:
+                data->ppid = atoi(token);
+                break;
+            case 14:
+                data->user_time = atoll(token);
+                break;
+            case 15:
+                data->kernel_time = atoll(token);
+                break;
+            case 20:
+                data->num_threads = atoi(token);
+                break;
+            case 24:
+                data->rss = atoll(token) * (sysconf(_SC_PAGESIZE) / 1024);
+                break;
+            case 39:
+                data->last_cpu = atoi(token);
+                break;
+        }
+        field++;
+        token = strtok(NULL, " ");
+    }
+
+    data->stale = 1;
+    data->next = NULL;
+    
+    fclose(fp);
+    return data;
+    
+}
 
 
 Hash* insert_process(Hash* hash, int pid){
 
     Process* data = parse_process(pid);
+
+    if (data == NULL) {
+        return hash;
+    }
 
     int index = pid % hash->size;
     Process* current = hash->buckets[index];
@@ -82,4 +163,73 @@ Hash* remove_process(Hash* hash, int pid) {
     }
 
     return hash;
+}
+
+Hash* update_process(Hash* hash, int pid){
+    Process* existing = find_process(hash, pid);
+
+    if (existing == NULL){
+        return insert_process(hash, pid);
+    }
+
+    Process* fresh = parse_process(pid);
+    if (fresh == NULL){
+        return hash;
+    }
+
+    fresh->next = existing->next;
+    *existing = *fresh;
+    free(fresh);
+    existing->stale = 0;
+
+    return hash;
+}
+
+void mark_all_stale(Hash* hash){
+    for (int i = 0; i < hash->size; i++){
+        Process* data = hash->buckets[i];
+        while(data != NULL){
+            data->stale = 1;
+            data = data->next;
+        }
+    }
+}
+
+Hash* check(Hash* hash){
+    for (int i = 0; i < hash->size; i++){
+        Process* data = hash->buckets[i];
+        while(data != NULL){
+            Process* next = data->next;
+            if(data->stale){
+                hash = remove_process(hash, data->pid);
+            }
+            data = next;
+        }
+    }
+    return hash;
+}
+
+void free_hash(Hash* hash){
+    for (int i = 0; i < hash->size; i++){
+        Process* data = hash->buckets[i];
+        while(data != NULL){
+            Process* temp = data->next;
+            free(data);
+            data = temp;
+        }
+    }
+    free(hash->buckets);
+    free(hash);
+}
+
+void print_process_info(Hash* hash){
+    for (int i = 0; i < hash->size; i++){
+        Process* data = hash->buckets[i];
+        while(data != NULL){
+            printf("PID: %d, Name: %s, State: %c, PPID: %d, User Time: %lld, Kernel Time: %lld, Threads: %d, RSS: %lld, Last CPU: %d\n",
+                data->pid, data->name, data->state, data->ppid, data->user_time, data->kernel_time,
+                data->num_threads, data->rss, data->last_cpu);
+            data = data->next;
+        }
+    }
 }
