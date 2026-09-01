@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "mem.h"
 #include <string.h>
+#include <ncurses.h>
 
 long long* parse_memory_info(long long *mem_info, const char *file){
     FILE *fp = fopen(file, "r");
@@ -27,7 +28,7 @@ long long* parse_memory_info(long long *mem_info, const char *file){
         }
         else if (strncmp(line, "SwapFree:", 9) == 0){
             sscanf(line, "SwapFree: %lld", &mem_info[SWAP_FREE]);
-            break; // No need to continue reading after SwapFree
+            break;
         }
     }
 
@@ -35,22 +36,28 @@ long long* parse_memory_info(long long *mem_info, const char *file){
     return mem_info;
 }
 
-void print_main_memory_usage(long long* mem_info){
-    long long usage = (mem_info[MEM_TOTAL] - mem_info[MEM_AVAILABLE]);
-    float percentage = (float) usage / mem_info[MEM_TOTAL] * 100;
-    printf("Memory Usage: %lld MB (%.2f%%)\n", usage/1024, percentage);
+int print_main_memory_usage(long long* mem_info, int start_row, int offset){
+    int screen_row = start_row - offset;
+    if (screen_row >= 0 && screen_row < LINES){
+        long long usage = mem_info[MEM_TOTAL] - mem_info[MEM_AVAILABLE];
+        float percentage = (float) usage / mem_info[MEM_TOTAL] * 100;
+        mvprintw(screen_row, 0, "Memory Usage: %lld MB (%.2f%%)", usage/1024, percentage);
+    }
+    return 1;
 }
 
-void print_swap_and_cache_info(long long* mem_info){
-    printf("Buffers: %lld MB\n", mem_info[MEM_BUFFERS]/1024);
-    printf("Cached: %lld MB\n", mem_info[MEM_CACHED]/1024);
-    
-    long long swap_used = mem_info[SWAP_TOTAL] - mem_info[SWAP_FREE];
-    
-    float swap_percentage = 0.0;
-    if (mem_info[SWAP_TOTAL] != 0){
-        swap_percentage = (float) swap_used / mem_info[SWAP_TOTAL] * 100;
-    }
+int print_swap_and_cache_info(long long* mem_info, int start_row, int offset){
+    for (int i = 0; i < 3; i++){
+        int screen_row = start_row + i - offset;
+        if (screen_row < 0 || screen_row >= LINES) continue;
 
-    printf("Swap usage: %lld MB (%.2f%%)\n", swap_used/1024, swap_percentage);
+        if (i == 0) mvprintw(screen_row, 0, "Buffers: %lld MB", mem_info[MEM_BUFFERS]/1024);
+        else if (i == 1) mvprintw(screen_row, 0, "Cached: %lld MB", mem_info[MEM_CACHED]/1024);
+        else {
+            long long swap_used = mem_info[SWAP_TOTAL] - mem_info[SWAP_FREE];
+            float swap_pct = mem_info[SWAP_TOTAL] ? (float)swap_used / mem_info[SWAP_TOTAL] * 100 : 0.0;
+            mvprintw(screen_row, 0, "Swap usage: %lld MB (%.2f%%)", swap_used/1024, swap_pct);
+        }
+    }
+    return 7;
 }

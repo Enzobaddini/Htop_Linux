@@ -77,3 +77,11 @@ void free_pid_list(PidList* values) {
         free(values);
     }
 }
+
+void debug(PidList* values){
+    if (values == NULL) return;
+    PidList* aux = values;
+    for(int i = 0; i < aux->count; i++){
+        printf("%d\n", aux->pid[i]);
+    }
+}

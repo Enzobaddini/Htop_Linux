@@ -10,6 +10,6 @@ enum MemoryInfoIndex{
 
 long long* parse_memory_info(long long *mem_info, const char *file);
 
-void print_main_memory_usage(long long* mem_info);
+int print_main_memory_usage(long long* mem_info, int start_row, int offset);
 
-void print_swap_and_cache_info(long long* mem_info);
+int print_swap_and_cache_info(long long* mem_info, int start_row, int offset);

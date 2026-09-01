@@ -1,3 +1,5 @@
+
+
 typedef struct process{
     int pid; 
     char name[256]; 
@@ -17,7 +19,9 @@ typedef struct hash{
     int size;
 } Hash;
 
-void print_process_info(Hash* hash);
+#define LIST_START_ROW 25
+
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset);
 
 void free_hash(Hash* hash);
 

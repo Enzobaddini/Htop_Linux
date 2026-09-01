@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "cpu.h"
 #include <string.h>
-
+#include <ncurses.h>
 
 CPUStats* initialize_cpu_stats() {
 
@@ -66,7 +66,14 @@ CPUStats* parse_cpu_stats(const char *file, CPUStats **stats) {
 }
 
 
-void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results) {
+int cpu_stats_count(CPUStats *stats) {
+    int n = 0;
+    for (CPUStats *aux = stats; aux != NULL; aux = aux->next)
+        n++;
+    return n;
+}
+
+void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results, int nresults) {
 
     unsigned long long delta_idle = 0, idle1 = 0, idle2 = 0;
     unsigned long long delta_total = 0, total1 = 0, total2 = 0;
@@ -74,7 +81,7 @@ void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results) {
 
     CPUStats *aux1 = stats1, *aux2 = stats2;
     
-    while(aux1 != NULL && aux2 != NULL){
+    while(aux1 != NULL && aux2 != NULL && count < nresults){
     
         total1 = aux1->user + aux1->nice + aux1->system + aux1->idle + aux1->iowait + aux1->irq + aux1->softirq;
         total2 = aux2->user + aux2->nice + aux2->system + aux2->idle + aux2->iowait + aux2->irq + aux2->softirq;
@@ -82,11 +89,32 @@ void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results) {
         idle1 = aux1->idle + aux1->iowait;
         idle2 = aux2->idle + aux2->iowait;
         
+        if (total2 < total1 || idle2 < idle1) {
+            results[count++] = 0.0f;
+            aux1 = aux1->next;
+            aux2 = aux2->next;
+            continue;
+        }
 
         //calculate the difference between the two samples
         delta_idle = idle2 - idle1; 
         delta_total = total2 - total1;
         
+        if (delta_idle > delta_total) {
+            results[count++] = 0.0f;
+            aux1 = aux1->next;
+            aux2 = aux2->next;
+            continue;
+        }
+
+
+        if (delta_total == 0) {
+            results[count++] = 0.0f;
+            aux1 = aux1->next;
+            aux2 = aux2->next;
+            continue;
+        }
+
         results[count++] = ((float) (delta_total - delta_idle) / delta_total) * 100;
         
         aux1 = aux1->next;
@@ -94,33 +122,37 @@ void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results) {
     }
 }
 
-void print_cpu_usage(float *results, int total){
-    int index = 0;
-    while (index < total){
-
-        if (index == 0){
-            printf("CPU Total %.2f%%\n", results[index]);
-            index++;
-        } 
-        
-        else {
-            printf("CPU %d (%.2f%%) ", index, results[index]);
-            if (index % 3 == 0) printf("\n");
-            index++;
-        }
-        
-    }
-
-    printf("\n");
-
+int cpu_usage_row_count(int total) {
+    if (total <= 0) return 0;
+    if (total == 1) return 1;
+    return (1 + ((total - 1) + 2) / 3) + 4;
 }
 
-void print_cpu_stats_debug(CPUStats *stats){
-    CPUStats *aux = stats;
-    while (aux != NULL){
-        printf("%llu %llu %llu %llu %llu %llu %llu\n", aux->user, aux->nice, aux->system, aux->idle, aux->iowait, aux->irq, aux->softirq);
-        aux = aux->next;
+int print_cpu_usage(float *results, int total, int start_row, int offset){
+    for (int index = 0; index < total; index++){
+        int virtual_row;
+        int pos_x;
+
+        if (index == 0) {
+            virtual_row = start_row;
+            pos_x = 0;
+        } else {
+            int core = index - 1;
+            virtual_row = start_row + 1 + core / 3;
+            pos_x = (core % 3) * 20;
+        }
+
+        int screen_row = virtual_row - offset;
+        if (screen_row < 0 || screen_row >= LINES)
+            continue;
+
+        if (index == 0)
+            mvprintw(screen_row, pos_x, "CPU Total %.2f%%", results[index]);
+        else
+            mvprintw(screen_row, pos_x, "CPU %d (%.2f%%)", index, results[index]);
     }
+
+    return cpu_usage_row_count(total);
 }
 
 void free_cpu_stats_list(CPUStats *stats){

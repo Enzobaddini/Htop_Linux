@@ -7,9 +7,13 @@ CPUStats *initialize_cpu_stats();
 
 CPUStats* parse_cpu_stats(const char *file, CPUStats **stats); // parses first 7 fields of /proc/stat's "cpu" line, in name_list's order
 
-void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results); // returns fraction [0,1]; stats2 must be a later sample than stats1, same field order
+int cpu_stats_count(CPUStats *stats);
 
-void print_cpu_usage(float *results, int total);
+void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results, int nresults);
+
+int cpu_usage_row_count(int total);
+
+int print_cpu_usage(float *results, int total, int start_row, int offset);
 
 void print_cpu_stats_debug(CPUStats *stats); 
 

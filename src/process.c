@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "pid.h"
 #include "process.h"
+#include <ncurses.h>
 
 Hash* create_hash_map(int size){
     Hash* hash = (Hash*)malloc(sizeof(Hash));
@@ -33,13 +35,13 @@ Process* parse_process(int pid){
     if (fp == NULL){
         return NULL;
     }
-    char line[256];
+    char line[4096];
     if(fgets(line, sizeof(line), fp) == NULL) {
         fclose(fp);
         return NULL;
     }
 
-    Process* data = (Process*)malloc(sizeof(Process));
+    Process* data = (Process*)calloc(1, sizeof(Process));
     if (data == NULL) {
         perror("Error allocating memory for Process struct");
         fclose(fp);
@@ -56,8 +58,11 @@ Process* parse_process(int pid){
         return NULL;
     }
     
-    int size_name = last_paren - first_paren - 1;
-    strncpy(data->name, first_paren + 1, size_name);
+    int size_name = (int)(last_paren - first_paren - 1);
+    if (size_name < 0) size_name = 0;
+    if (size_name > (int)sizeof(data->name) - 1)
+        size_name = (int)sizeof(data->name) - 1;
+    memcpy(data->name, first_paren + 1, (size_t)size_name);
     data->name[size_name] = '\0';
 
     char* rest = last_paren + 2;
@@ -93,7 +98,7 @@ Process* parse_process(int pid){
         token = strtok(NULL, " ");
     }
 
-    data->stale = 1;
+    data->stale = 0;
     data->next = NULL;
     
     fclose(fp);
@@ -222,14 +227,23 @@ void free_hash(Hash* hash){
     free(hash);
 }
 
-void print_process_info(Hash* hash){
-    for (int i = 0; i < hash->size; i++){
-        Process* data = hash->buckets[i];
-        while(data != NULL){
-            printf("PID: %d, Name: %s, State: %c, PPID: %d, User Time: %lld, Kernel Time: %lld, Threads: %d, RSS: %lld, Last CPU: %d\n",
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset){
+    int virtual_row = start_row;
+    int max_len = COLS > 1 ? COLS - 1 : 0;
+
+    for (int i = 0; i < list_pid->count; i++){
+        Process* data = find_process(hash, list_pid->pid[i]);
+        int screen_row = virtual_row - offset;
+        if (data != NULL && screen_row >= 0 && screen_row < LINES){
+            char line[512];
+            snprintf(line, sizeof(line),
+                "PID: %d, Name: %s, State: %c, PPID: %d, User Time: %lld, Kernel Time: %lld, Threads: %d, RSS: %lld, Last CPU: %d",
                 data->pid, data->name, data->state, data->ppid, data->user_time, data->kernel_time,
                 data->num_threads, data->rss, data->last_cpu);
-            data = data->next;
+            mvaddnstr(screen_row, 0, line, max_len);
         }
+        virtual_row++;
     }
+
+    return virtual_row - start_row;
 }
