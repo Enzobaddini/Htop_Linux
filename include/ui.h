@@ -1,3 +1,5 @@
+#ifndef UI_H
+#define UI_H
 
 
 void handle_scroll_input(int ch, int* offset, int total, int visible);
@@ -11,3 +13,8 @@ int compare_by_pid(const void* a, const void* b);
 int compare_by_name(const void* a, const void* b);
 
 int compare_by_cpu(const void* a, const void* b);
+
+#endif
+
+#include "pid.h"
+#include "process.h"

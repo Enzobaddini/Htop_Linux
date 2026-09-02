@@ -1,3 +1,6 @@
+#ifndef CPU_H
+#define CPU_H
+
 typedef struct CPUStats {
     unsigned long long user, nice, system, idle, iowait, irq, softirq;
     struct CPUStats *next;
@@ -18,3 +21,5 @@ int print_cpu_usage(float *results, int total, int start_row, int offset);
 void print_cpu_stats_debug(CPUStats *stats); 
 
 void free_cpu_stats_list(CPUStats *stats);
+
+#endif

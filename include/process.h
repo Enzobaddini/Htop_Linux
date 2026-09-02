@@ -1,4 +1,5 @@
-
+#ifndef PROCESS_H
+#define PROCESS_H
 
 typedef struct process{
     int pid; 
@@ -40,3 +41,9 @@ Hash* insert_process(Hash* hash, int pid);
 Process* parse_process(int pid);
 
 Hash* create_hash_map(int size);
+
+void prune_dead_pids(PidList* list, Hash* hash);
+
+#endif
+
+#include "pid.h"

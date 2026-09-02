@@ -247,3 +247,14 @@ int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset)
 
     return virtual_row - start_row;
 }
+
+
+void prune_dead_pids(PidList* list, Hash* hash) {
+    int write = 0;
+    for (int read = 0; read < list->count; read++) {
+        if (find_process(hash, list->pid[read]) != NULL) {
+            list->pid[write++] = list->pid[read];
+        }
+    }
+    list->count = write;
+}

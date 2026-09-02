@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <string.h>
 #include "pid.h"
+#include "process.h"
+#include "ui.h"
 
 int is_pid(const char* name){
     if (name[0] == '\0') return 0;
@@ -12,7 +15,7 @@ int is_pid(const char* name){
     return 1;
 }
 
-PidList* parse_pid(const char* file) {
+PidList* parse_pid(const char* file, const char* number) {
     int capacity = 64;
     
     PidList* values = (PidList*)malloc(sizeof(PidList));
@@ -46,7 +49,15 @@ PidList* parse_pid(const char* file) {
 
         if (is_pid(entry->d_name)){
             int_pid = atoi(entry->d_name);
-            values->pid[values->count++] = int_pid;
+            if (strncmp(number, "0", strlen(number)) == 0) {
+                values->pid[values->count++] = int_pid;          
+            }       
+            else {
+                if (strncmp(number, entry->d_name, strlen(number)) == 0) {
+                    values->pid[values->count++] = int_pid;    
+                }   
+            }
+
             if (values->count == capacity){
                 capacity *= 2;
                 int* temp = (int*)realloc(values->pid, capacity * sizeof(int));
@@ -85,3 +96,4 @@ void debug(PidList* values){
         printf("%d\n", aux->pid[i]);
     }
 }
+

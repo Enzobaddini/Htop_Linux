@@ -125,7 +125,7 @@ void calculate_cpu_usage(CPUStats *stats1, CPUStats *stats2, float *results, int
 int cpu_usage_row_count(int total) {
     if (total <= 0) return 0;
     if (total == 1) return 1;
-    return (1 + ((total - 1) + 2) / 3) + 4;
+    return (1 + ((total - 1) + 2) / 3);
 }
 
 int print_cpu_usage(float *results, int total, int start_row, int offset){

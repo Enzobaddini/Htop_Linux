@@ -59,5 +59,5 @@ int print_swap_and_cache_info(long long* mem_info, int start_row, int offset){
             mvprintw(screen_row, 0, "Swap usage: %lld MB (%.2f%%)", swap_used/1024, swap_pct);
         }
     }
-    return 7;
+    return 3;
 }

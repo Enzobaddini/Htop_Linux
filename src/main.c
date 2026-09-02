@@ -25,10 +25,12 @@ int main() {
     int flag = 0;
 
     Hash *hash = create_hash_map(512);
-    PidList *list_pids = parse_pid("/proc");
+    PidList *list_pids = parse_pid("/proc", "1");
+
     for (int i = 0; i < list_pids->count; i++){
         hash = insert_process(hash, list_pids->pid[i]);
     }
+    prune_dead_pids(list_pids, hash);  
 
     while (1){   
     
@@ -59,12 +61,14 @@ int main() {
         
         mark_all_stale(hash);
         free_pid_list(list_pids);
-        list_pids = parse_pid("/proc");
-        list_pids = organize_process(ch, list_pids, hash, &flag);
+        list_pids = parse_pid("/proc", "1");
+        
         for (int i = 0; i < list_pids->count; i++){
             hash = update_process(hash, list_pids->pid[i]);
         }
         hash = check(hash);
+        prune_dead_pids(list_pids, hash);  
+        list_pids = organize_process(ch, list_pids, hash, &flag);
 
         int cpu_rows = cpu_usage_row_count(total);
         int mem_rows = 4;
@@ -97,6 +101,6 @@ int main() {
     
     endwin();
     
-
+   
     return 0;
 }
