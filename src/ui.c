@@ -69,20 +69,20 @@ PidList* organize_process(int ch, PidList* list, Hash* hash, int* flag){
 
     switch (ch) {
         
-        case 49:
+    case 32:
 
         qsort(list->pid, list->count, sizeof(int), compare_by_pid);
         (*flag) = 1;
         break;
         
-    case 50:
+    case 9:
             
         current_hash = hash;
         qsort(list->pid, list->count, sizeof(int), compare_by_name);
         (*flag) = 2;
         break;
         
-    case 51:
+    case 10:
 
         current_hash = hash;
         qsort(list->pid, list->count, sizeof(int), compare_by_cpu);
