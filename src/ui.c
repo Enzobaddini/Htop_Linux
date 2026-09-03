@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include "pid.h"
 #include "process.h"
@@ -123,7 +123,8 @@ int compare_by_name(const void* a, const void* b) {
         return 0; 
     }
 
-    return strcmp(process_a->name, process_b->name);
+    return strcasecmp(process_a->name, process_b->name);
+
 }
 
 int compare_by_cpu(const void* a, const void* b) {
