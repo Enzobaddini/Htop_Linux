@@ -14,6 +14,8 @@ int compare_by_name(const void* a, const void* b);
 
 int compare_by_cpu(const void* a, const void* b);
 
+char* insert_find(int ch, char* find, int* tam);
+
 #endif
 
 #include "pid.h"

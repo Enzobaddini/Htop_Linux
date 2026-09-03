@@ -23,9 +23,12 @@ int main() {
     int offset = 0;
     int ch;
     int flag = 0;
+    char* find = (char*)malloc(sizeof(char) * 1000);
+    int tam = 0;
+
 
     Hash *hash = create_hash_map(512);
-    PidList *list_pids = parse_pid("/proc", "1");
+    PidList *list_pids = parse_pid("/proc", "0");
 
     for (int i = 0; i < list_pids->count; i++){
         hash = insert_process(hash, list_pids->pid[i]);
@@ -61,7 +64,8 @@ int main() {
         
         mark_all_stale(hash);
         free_pid_list(list_pids);
-        list_pids = parse_pid("/proc", "1");
+        find = insert_find(ch, find, &tam);
+        list_pids = parse_pid("/proc", find);
         
         for (int i = 0; i < list_pids->count; i++){
             hash = update_process(hash, list_pids->pid[i]);

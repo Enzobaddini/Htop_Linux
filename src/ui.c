@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "pid.h"
 #include "process.h"
 #include "ui.h"
@@ -140,6 +141,23 @@ int compare_by_cpu(const void* a, const void* b) {
     long long cpu_time_b = process_b->user_time + process_b->kernel_time;
 
     return (cpu_time_b > cpu_time_a) - (cpu_time_b < cpu_time_a);
+}
+
+char* insert_find(int ch, char* find, int* tam) {
+    if (find != NULL) {    
+        if (ch >= 48 && ch <= 57){
+            find[(*tam)] = (char) ch;
+            (*tam)++;
+            find[*tam] = '\0';
+
+        }
+
+        else if (*tam > 0 && (ch == KEY_BACKSPACE || ch == 8 || ch == 127)) {
+            (*tam)--;
+            find[*tam] = '\0';
+        }
+    }
+    return find;
 }
 
 
