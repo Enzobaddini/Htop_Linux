@@ -144,18 +144,38 @@ int compare_by_cpu(const void* a, const void* b) {
     return (cpu_time_b > cpu_time_a) - (cpu_time_b < cpu_time_a);
 }
 
-char* insert_find(int ch, char* find, int* tam) {
-    if (find != NULL) {    
-        if (ch >= 48 && ch <= 57){
-            find[(*tam)] = (char) ch;
-            (*tam)++;
-            find[*tam] = '\0';
-
+char* insert_find(int ch, char* find, int* tam, char* pid_name) {
+    if (ch >= 48 && ch <= 57) { 
+        if (pid_name[0] != '\0') { 
+            pid_name[0] = '\0';
+            *tam = 0; 
         }
-
-        else if (*tam > 0 && (ch == KEY_BACKSPACE || ch == 8 || ch == 127)) {
+        find[*tam] = (char) ch;
+        (*tam)++;
+        find[*tam] = '\0';
+    }
+    
+    else if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95) {
+        if (!(find[0] == '0' && find[1] == '\0')) { 
+            *tam = 0; 
+        }
+        pid_name[*tam] = (char) ch;
+        (*tam)++;
+        pid_name[*tam] = '\0';
+        
+        find[0] = '0';
+        find[1] = '\0';
+    }
+    
+    else if (*tam > 0 && (ch == KEY_BACKSPACE || ch == 8 || ch == 127)) {
+        
+        if (pid_name[0] != '\0') {
             (*tam)--;
-            find[*tam] = '\0';
+            pid_name[*tam] = '\0'; 
+        }
+        else { 
+            (*tam)--;
+            find[*tam] = '\0'; 
         }
     }
     return find;

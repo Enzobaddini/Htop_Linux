@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <string.h>
+#include <strings.h>
 #include "pid.h"
 #include "process.h"
 #include "ui.h"
@@ -15,7 +16,7 @@ int is_pid(const char* name){
     return 1;
 }
 
-PidList* parse_pid(const char* file, const char* number) {
+PidList* parse_pid(const char* file) {
     int capacity = 64;
     
     PidList* values = (PidList*)malloc(sizeof(PidList));
@@ -43,21 +44,12 @@ PidList* parse_pid(const char* file, const char* number) {
     }
 
     struct dirent* entry;
-    int int_pid;
+    
 
     while((entry = readdir(dir)) != NULL){
 
         if (is_pid(entry->d_name)){
-            int_pid = atoi(entry->d_name);
-            if (strncmp(number, "0", strlen(number)) == 0) {
-                values->pid[values->count++] = int_pid;          
-            }       
-            else {
-                if (strncmp(number, entry->d_name, strlen(number)) == 0) {
-                    values->pid[values->count++] = int_pid;    
-                }   
-            }
-
+            values->pid[values->count++] = atoi(entry->d_name);
             if (values->count == capacity){
                 capacity *= 2;
                 int* temp = (int*)realloc(values->pid, capacity * sizeof(int));
@@ -77,6 +69,36 @@ PidList* parse_pid(const char* file, const char* number) {
     closedir(dir);
     
     return values;
+}
+
+PidList* filter_pids(PidList* raw, Hash* hash, const char* number, const char* pid_name){
+    PidList* out = malloc(sizeof(PidList));
+    out->pid = malloc(sizeof(int) * 64);
+    out->count = 0;
+    int capacity = 64;
+
+    for (int i = 0; i < raw->count; i++){
+        int int_pid = raw->pid[i];
+        if (pid_name[0] != '\0') {
+            Process* p = find_process(hash, int_pid);
+            if (p != NULL && strncasecmp(p->name, pid_name, strlen(pid_name)) == 0)
+                out->pid[out->count++] = int_pid;
+        }
+        else if (strcmp(number, "0") == 0) {
+            out->pid[out->count++] = int_pid;
+        }
+        else {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%d", int_pid);
+            if (strncmp(number, buf, strlen(number)) == 0)
+                out->pid[out->count++] = int_pid;
+        }
+        if (out->count == capacity){
+            capacity *= 2;
+            out->pid = realloc(out->pid, capacity * sizeof(int));
+        }
+    }
+    return out;
 }
 
 

@@ -24,15 +24,22 @@ int main() {
     int ch;
     int flag = 0;
     char* find = (char*)malloc(sizeof(char) * 1000);
+    char* pid_name = (char*)malloc(sizeof(char) * 1000);
+    find[0] = '0'; 
+    find[1] = '\0';  
+    pid_name[0] = '\0';  
     int tam = 0;
 
 
     Hash *hash = create_hash_map(512);
-    PidList *list_pids = parse_pid("/proc", "0");
+    PidList *raw = parse_pid("/proc");
+    
+    for (int i = 0; i < raw->count; i++){
+        hash = insert_process(hash, raw->pid[i]);
+    } 
+    
+    PidList *list_pids = filter_pids(raw, hash, "0", "");
 
-    for (int i = 0; i < list_pids->count; i++){
-        hash = insert_process(hash, list_pids->pid[i]);
-    }
     prune_dead_pids(list_pids, hash);  
 
     while (1){   
@@ -43,6 +50,7 @@ int main() {
 
         ch = getch();
         if (ch == 27) break;
+        find = insert_find(ch, find, &tam, pid_name);
 
         CPUStats *stats2 = initialize_cpu_stats();
         stats2 = parse_cpu_stats("/proc/stat", &stats2);
@@ -63,15 +71,17 @@ int main() {
         parse_memory_info(mem_info, "/proc/meminfo");
         
         mark_all_stale(hash);
-        free_pid_list(list_pids);
-        find = insert_find(ch, find, &tam);
-        list_pids = parse_pid("/proc", find);
-        
-        for (int i = 0; i < list_pids->count; i++){
-            hash = update_process(hash, list_pids->pid[i]);
+        free_pid_list(raw);
+        raw = parse_pid("/proc");
+
+        for (int i = 0; i < raw->count; i++){
+            hash = update_process(hash, raw->pid[i]);
         }
         hash = check(hash);
-        prune_dead_pids(list_pids, hash);  
+        prune_dead_pids(raw, hash);
+
+        free_pid_list(list_pids);
+        list_pids = filter_pids(raw, hash, find, pid_name);
         list_pids = organize_process(ch, list_pids, hash, &flag);
 
         int cpu_rows = cpu_usage_row_count(total);
@@ -100,8 +110,11 @@ int main() {
         
     }
     
+    free_pid_list(raw);
     free_pid_list(list_pids);
     free_hash(hash);
+    free(find);
+    free(pid_name);
     
     endwin();
     

@@ -6,7 +6,12 @@ typedef struct PidList{
     int count;
 }PidList;
 
-PidList* parse_pid(const char* file, const char* number);
+struct hash;
+typedef struct hash Hash;
+
+PidList* parse_pid(const char* file);
+
+PidList* filter_pids(PidList* raw, Hash* hash, const char* number, const char* pid_name);
 
 int is_pid(const char* name);
 
