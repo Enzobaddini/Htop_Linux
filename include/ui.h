@@ -2,7 +2,7 @@
 #define UI_H
 
 
-void handle_scroll_input(int ch, int* offset, int total, int visible);
+void handle_scroll_input(int ch, int* offset, int total, int visible, int* select, int process_count);
 
 void scroll_window(int total, int visible, int offset, int bar_height, int start_row);
 
@@ -14,7 +14,7 @@ int compare_by_name(const void* a, const void* b);
 
 int compare_by_cpu(const void* a, const void* b);
 
-char* insert_find(int ch, char* find, int* tam, char* pid_name);
+char* insert_find(int ch, char* find, int* size, char* pid_name);
 
 #endif
 

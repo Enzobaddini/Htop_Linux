@@ -22,7 +22,7 @@ typedef struct hash{
 
 #define LIST_START_ROW 25
 
-int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset);
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int select, int ch);
 
 void free_hash(Hash* hash);
 

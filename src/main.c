@@ -19,6 +19,7 @@ int main() {
     keypad(stdscr, TRUE);
     timeout(1000);
     curs_set(0);
+    mousemask(BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
 
     int offset = 0;
     int ch;
@@ -28,7 +29,8 @@ int main() {
     find[0] = '0'; 
     find[1] = '\0';  
     pid_name[0] = '\0';  
-    int tam = 0;
+    int size = 0;
+    int select_line = 0;
 
 
     Hash *hash = create_hash_map(512);
@@ -50,7 +52,8 @@ int main() {
 
         ch = getch();
         if (ch == 27) break;
-        find = insert_find(ch, find, &tam, pid_name);
+        
+        find = insert_find(ch, find, &size, pid_name);
 
         CPUStats *stats2 = initialize_cpu_stats();
         stats2 = parse_cpu_stats("/proc/stat", &stats2);
@@ -92,15 +95,20 @@ int main() {
 
         if (ch == 27) break; 
 
-        handle_scroll_input(ch, &offset, total_lines, visible);
+        handle_scroll_input(ch, &offset, total_lines, visible, &select_line, list_pids->count);
 
         clear();
         int row = 0;
         row += print_cpu_usage(cpu_usage, total, row, offset);
         row += print_main_memory_usage(mem_info, row, offset);
         row += print_swap_and_cache_info(mem_info, row, offset);
-        row += print_process_info(hash, list_pids, row, offset);
+        row += print_process_info(hash, list_pids, row, offset, select_line, ch);
         scroll_window(total_lines, visible, offset, visible, 0);
+        for (int i = 0; i < raw->count; i++){
+            hash = update_process(hash, raw->pid[i]);
+        }
+        hash = check(hash);
+        prune_dead_pids(raw, hash);
         refresh();
 
         free(cpu_usage);

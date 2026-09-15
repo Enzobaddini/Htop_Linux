@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include "pid.h"
 #include "process.h"
 #include <ncurses.h>
@@ -227,20 +228,26 @@ void free_hash(Hash* hash){
     free(hash);
 }
 
-int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset){
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int select, int ch){
     int virtual_row = start_row;
     int max_len = COLS > 1 ? COLS - 1 : 0;
+    char line[512];
+
 
     for (int i = 0; i < list_pid->count; i++){
         Process* data = find_process(hash, list_pid->pid[i]);
         int screen_row = virtual_row - offset;
         if (data != NULL && screen_row >= 0 && screen_row < LINES){
-            char line[512];
             snprintf(line, sizeof(line),
                 "PID: %d, Name: %s, State: %c, PPID: %d, User Time: %lld, Kernel Time: %lld, Threads: %d, RSS: %lld, Last CPU: %d",
                 data->pid, data->name, data->state, data->ppid, data->user_time, data->kernel_time,
                 data->num_threads, data->rss, data->last_cpu);
+            if (i == select) attron(A_REVERSE);
             mvaddnstr(screen_row, 0, line, max_len);
+            if (i == select) attroff(A_REVERSE);
+        }
+        if (i == select && ch == KEY_DC) {
+            kill(list_pid->pid[i], SIGTERM);
         }
         virtual_row++;
     }

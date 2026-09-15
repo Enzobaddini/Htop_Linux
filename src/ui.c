@@ -10,20 +10,18 @@
 
 static Hash* current_hash = NULL;
 
-void handle_scroll_input(int ch, int* offset, int total, int visible) {
+void handle_scroll_input(int ch, int* offset, int total, int visible, int* select, int process_count) {
 
     int max_offset = (total > visible) ? (total - visible) : 0;
+    int max_select = (process_count > 0) ? (process_count - 1) : 0;
+    int process_start_row = total - process_count;
     
     switch (ch) {
         case KEY_DOWN:
-            if (*offset < max_offset) {
-                (*offset)++;
-            }
+            if (*select < max_select) (*select)++;
             break;
         case KEY_UP:
-            if (*offset > 0) {
-                (*offset)--;
-            }
+            if (*select > 0) (*select)--;
             break;
         case KEY_NPAGE:
             *offset += visible;
@@ -33,10 +31,23 @@ void handle_scroll_input(int ch, int* offset, int total, int visible) {
             break;
         case KEY_END:
             *offset = max_offset;
+            *select = max_select;
             break;
         case KEY_HOME:
             *offset = 0;
+            *select = 0;
             break;
+    }
+    if (*offset < 0) *offset = 0;
+    if (*offset > max_offset) *offset = max_offset;
+    if (*select < 0) *select = 0;
+    if (*select > max_select) *select = max_select;
+
+    int selected_row = process_start_row + *select;
+    if (selected_row < *offset) {
+        *offset = selected_row;
+    } else if (selected_row >= *offset + visible) {
+        *offset = selected_row - visible + 1;
     }
     if (*offset < 0) *offset = 0;
     if (*offset > max_offset) *offset = max_offset;
@@ -144,38 +155,38 @@ int compare_by_cpu(const void* a, const void* b) {
     return (cpu_time_b > cpu_time_a) - (cpu_time_b < cpu_time_a);
 }
 
-char* insert_find(int ch, char* find, int* tam, char* pid_name) {
+char* insert_find(int ch, char* find, int* size, char* pid_name) {
     if (ch >= 48 && ch <= 57) { 
         if (pid_name[0] != '\0') { 
             pid_name[0] = '\0';
-            *tam = 0; 
+            *size = 0; 
         }
-        find[*tam] = (char) ch;
-        (*tam)++;
-        find[*tam] = '\0';
+        find[*size] = (char) ch;
+        (*size)++;
+        find[*size] = '\0';
     }
     
     else if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95) {
         if (!(find[0] == '0' && find[1] == '\0')) { 
-            *tam = 0; 
+            *size = 0; 
         }
-        pid_name[*tam] = (char) ch;
-        (*tam)++;
-        pid_name[*tam] = '\0';
+        pid_name[*size] = (char) ch;
+        (*size)++;
+        pid_name[*size] = '\0';
         
         find[0] = '0';
         find[1] = '\0';
     }
     
-    else if (*tam > 0 && (ch == KEY_BACKSPACE || ch == 8 || ch == 127)) {
+    else if (*size > 0 && (ch == KEY_BACKSPACE || ch == 8 || ch == 127)) {
         
         if (pid_name[0] != '\0') {
-            (*tam)--;
-            pid_name[*tam] = '\0'; 
+            (*size)--;
+            pid_name[*size] = '\0'; 
         }
         else { 
-            (*tam)--;
-            find[*tam] = '\0'; 
+            (*size)--;
+            find[*size] = '\0'; 
         }
     }
     return find;
