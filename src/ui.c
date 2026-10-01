@@ -242,5 +242,46 @@ void kill_window(int* k){
     refresh();
 }
 
+int search_bar_hit(int y, int x){
+    int bx = COLS - SEARCH_W - 2;       
+    return y == 0 && x >= bx && x < bx + SEARCH_W;
+}
+
+void draw_search_bar(const char* find, const char* pid_name, int focus){
+    int bx = COLS - SEARCH_W - 2;
+    if (bx < 0) return;
+
+    const char* text = pid_name[0] ? pid_name : (strcmp(find, "0") ? find : "");
+
+    int len = (int)strlen(text);
+    int max = SEARCH_W - 4;
+
+    if (len > max)
+        text += len - max;
+
+    char shown[SEARCH_W];
+    char buf[SEARCH_W + 1];
+
+    if (text[0] == '\0' && !focus)
+        shown[0] = '\0';
+    else
+        snprintf(shown, sizeof(shown), "%s%s",
+                 text,
+                 focus ? "_" : "");
+
+    snprintf(buf, sizeof(buf),
+             "[%-*.*s]",
+             SEARCH_W - 2,
+             SEARCH_W - 2,
+             shown);
+
+    if (focus)
+        attron(A_REVERSE);
+
+    mvaddstr(0, bx, buf);
+
+    if (focus)
+        attroff(A_REVERSE);
+}
 
 

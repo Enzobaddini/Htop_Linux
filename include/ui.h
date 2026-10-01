@@ -1,5 +1,6 @@
 #ifndef UI_H
 #define UI_H
+#define SEARCH_W 24
 
 #include <ncurses.h>
 
@@ -21,6 +22,9 @@ WINDOW *create_centered_window(int height, int width);
 
 void kill_window(int* k);
 
+int  search_bar_hit(int y, int x);
+
+void draw_search_bar(const char* find, const char* pid_name, int focus);
 
 #endif
 

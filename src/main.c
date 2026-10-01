@@ -19,7 +19,8 @@ int main() {
     keypad(stdscr, TRUE);
     timeout(1000);
     curs_set(0);
-    mousemask(BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
+    mousemask(BUTTON1_CLICKED | BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
+
 
     int offset = 0;
     int ch;
@@ -32,6 +33,7 @@ int main() {
     int size = 0;
     int select_line = 0;
     int k = 0;
+    int search_focus = 0;
 
 
     Hash *hash = create_hash_map(512);
@@ -52,9 +54,25 @@ int main() {
         if (stats1 == NULL) return EXIT_FAILURE;
 
         ch = getch();
-        if (ch == 27) break;
+
+        if (ch == KEY_MOUSE) {
+            MEVENT ev;
+        if (getmouse(&ev) == OK && (ev.bstate & BUTTON1_CLICKED))
+            search_focus = search_bar_hit(ev.y, ev.x);
+        }
         
-        find = insert_find(ch, find, &size, pid_name);
+        if (search_focus) {
+            find = insert_find(ch, find, &size, pid_name);
+        } 
+        
+        else if (ch == '/') {
+            search_focus = 1;
+        } 
+        
+        else if (ch == 27) {
+            break;
+        }
+
 
         CPUStats *stats2 = initialize_cpu_stats();
         stats2 = parse_cpu_stats("/proc/stat", &stats2);
@@ -110,6 +128,7 @@ int main() {
         }
         hash = check(hash);
         prune_dead_pids(raw, hash);
+        draw_search_bar(find, pid_name, search_focus);
         refresh();
         if (ch == KEY_DC && list_pids->count > 0) kill_window(&k);
 
