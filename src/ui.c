@@ -6,6 +6,8 @@
 #include "process.h"
 #include "ui.h"
 #include <ncurses.h>
+#include <string.h>
+#include <errno.h>
 
 
 static Hash* current_hash = NULL;
@@ -191,5 +193,54 @@ char* insert_find(int ch, char* find, int* size, char* pid_name) {
     }
     return find;
 }
+
+
+WINDOW *create_centered_window(int height, int width){
+    int max_y, max_x;
+
+    getmaxyx(stdscr, max_y, max_x);
+
+    if (height > max_y) height = max_y;
+    if (width  > max_x) width  = max_x;
+
+    int start_y = (max_y - height) / 2;
+    int start_x = (max_x - width) / 2;
+
+    return newwin(height, width, start_y, start_x);
+}
+
+
+void kill_window(int* k){
+    WINDOW* win = create_centered_window(10, 70);
+    if (win == NULL){
+        *k = 0;
+        return;
+    }
+    box(win, 0, 0);
+
+    const char* msg;
+    if(*k == 0) msg = "SIGTERM sent to the process.";
+    else if(*k == EPERM) msg = "You don't have permission to kill this process!";
+    else msg = strerror(*k);
+    *k = 0;
+
+    int col = (getmaxx(win) - (int)strlen(msg)) / 2;
+    if (col < 1) col = 1;
+
+    wattron(win, A_BOLD);
+    mvwprintw(win, getmaxy(win) / 2 - 1, col, "%s", msg);
+    wattroff(win, A_BOLD);
+    wrefresh(win);
+
+    napms(3500);
+    flushinp();           
+    werase(win);
+    wrefresh(win);
+    delwin(win);
+
+    touchwin(stdscr);
+    refresh();
+}
+
 
 

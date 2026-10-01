@@ -31,6 +31,7 @@ int main() {
     pid_name[0] = '\0';  
     int size = 0;
     int select_line = 0;
+    int k = 0;
 
 
     Hash *hash = create_hash_map(512);
@@ -102,7 +103,7 @@ int main() {
         row += print_cpu_usage(cpu_usage, total, row, offset);
         row += print_main_memory_usage(mem_info, row, offset);
         row += print_swap_and_cache_info(mem_info, row, offset);
-        row += print_process_info(hash, list_pids, row, offset, select_line, ch);
+        row += print_process_info(hash, list_pids, row, offset, select_line, ch, &k);
         scroll_window(total_lines, visible, offset, visible, 0);
         for (int i = 0; i < raw->count; i++){
             hash = update_process(hash, raw->pid[i]);
@@ -110,6 +111,7 @@ int main() {
         hash = check(hash);
         prune_dead_pids(raw, hash);
         refresh();
+        if (ch == KEY_DC && list_pids->count > 0) kill_window(&k);
 
         free(cpu_usage);
         free_cpu_stats_list(stats1);

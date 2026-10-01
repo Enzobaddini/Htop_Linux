@@ -6,6 +6,7 @@
 #include "pid.h"
 #include "process.h"
 #include <ncurses.h>
+#include <errno.h>
 
 Hash* create_hash_map(int size){
     Hash* hash = (Hash*)malloc(sizeof(Hash));
@@ -228,7 +229,7 @@ void free_hash(Hash* hash){
     free(hash);
 }
 
-int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int select, int ch){
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int select, int ch, int* k){
     int virtual_row = start_row;
     int max_len = COLS > 1 ? COLS - 1 : 0;
     char line[512];
@@ -247,7 +248,7 @@ int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset,
             if (i == select) attroff(A_REVERSE);
         }
         if (i == select && ch == KEY_DC) {
-            kill(list_pid->pid[i], SIGTERM);
+            *k = (kill(list_pid->pid[i], SIGTERM) == 0) ? 0 : errno;
         }
         virtual_row++;
     }
