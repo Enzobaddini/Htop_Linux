@@ -1,8 +1,13 @@
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpu.h"
 #include <string.h>
 #include <ncurses.h>
+#include <time.h>
+
+
+static double last_sample_time = -1.0;
 
 CPUStats* initialize_cpu_stats() {
 
@@ -162,4 +167,17 @@ void free_cpu_stats_list(CPUStats *stats){
         aux = aux->next;
         free(temp);
     }
+}
+
+
+int cpu_sample_due(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    double now = t.tv_sec + t.tv_nsec / 1e9;
+
+    if (last_sample_time < 0.0 || now - last_sample_time >= 1.0) {
+        last_sample_time = now;
+        return 1;
+    }
+    return 0;
 }

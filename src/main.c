@@ -47,11 +47,15 @@ int main() {
 
     prune_dead_pids(list_pids, hash);  
 
+    CPUStats *cpu_prev = initialize_cpu_stats();
+    cpu_prev = parse_cpu_stats("/proc/stat", &cpu_prev);
+    if (cpu_prev == NULL) return EXIT_FAILURE;
+    int total = cpu_stats_count(cpu_prev);
+    float *cpu_usage = (float*)calloc((size_t)total, sizeof(float));
+    if (cpu_usage == NULL) return EXIT_FAILURE;
+
     while (1){   
     
-        CPUStats *stats1 = initialize_cpu_stats();
-        stats1 = parse_cpu_stats("/proc/stat", &stats1);
-        if (stats1 == NULL) return EXIT_FAILURE;
 
         ch = getch();
 
@@ -74,19 +78,16 @@ int main() {
         }
 
 
-        CPUStats *stats2 = initialize_cpu_stats();
-        stats2 = parse_cpu_stats("/proc/stat", &stats2);
-        if (stats2 == NULL) return EXIT_FAILURE;
-
-        int n1 = cpu_stats_count(stats1);
-        int n2 = cpu_stats_count(stats2);
-        int total = n1 < n2 ? n1 : n2;
-        if (total <= 0) return EXIT_FAILURE;
-
-        float *cpu_usage = (float*)calloc((size_t)total, sizeof(float));
-        if (cpu_usage == NULL) return EXIT_FAILURE;
-
-        calculate_cpu_usage(stats1, stats2, cpu_usage, total);
+        if (cpu_sample_due()) {
+            CPUStats *cpu_next = initialize_cpu_stats();
+            cpu_next = parse_cpu_stats("/proc/stat", &cpu_next);
+            if (cpu_next == NULL) return EXIT_FAILURE;
+            int n = cpu_stats_count(cpu_next);
+            int t = n < total ? n : total;
+            calculate_cpu_usage(cpu_prev, cpu_next, cpu_usage, t);
+            free_cpu_stats_list(cpu_prev);
+            cpu_prev = cpu_next;
+        }
 
         long long mem_info[MEM_INFO_COUNT];
         memset(mem_info, 0, sizeof(mem_info));
@@ -130,9 +131,6 @@ int main() {
         refresh();
         if (ch == KEY_DC && list_pids->count > 0) kill_window(&k);
 
-        free(cpu_usage);
-        free_cpu_stats_list(stats1);
-        free_cpu_stats_list(stats2);
 
         
     }
@@ -142,6 +140,8 @@ int main() {
     free_hash(hash);
     free(find);
     free(pid_name);
+    free(cpu_usage);
+    free_cpu_stats_list(cpu_prev);
     
     endwin();
     
