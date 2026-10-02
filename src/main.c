@@ -108,21 +108,19 @@ int main() {
 
         int cpu_rows = cpu_usage_row_count(total);
         int mem_rows = 4;
-        int total_lines = cpu_rows + mem_rows + list_pids->count;
-        int visible = LINES;
+        int header_rows = cpu_rows + mem_rows;
+        int body_visible = LINES - header_rows;
+        if (body_visible < 1) body_visible = 1; 
 
-
-        if (ch == 27) break; 
-
-        handle_scroll_input(ch, &offset, total_lines, visible, &select_line, list_pids->count);
+        handle_scroll_input(ch, &offset, list_pids->count, body_visible, &select_line);
 
         clear();
         int row = 0;
-        row += print_cpu_usage(cpu_usage, total, row, offset);
-        row += print_main_memory_usage(mem_info, row, offset);
-        row += print_swap_and_cache_info(mem_info, row, offset);
-        row += print_process_info(hash, list_pids, row, offset, select_line, ch, &k);
-        scroll_window(total_lines, visible, offset, visible, 0);
+        row += print_cpu_usage(cpu_usage, total, row, 0);
+        row += print_main_memory_usage(mem_info, row, 0);
+        row += print_swap_and_cache_info(mem_info, row, 0);
+        print_process_info(hash, list_pids, header_rows, offset, body_visible, select_line, ch, &k);
+        scroll_window(list_pids->count, body_visible, offset, body_visible, header_rows);
         for (int i = 0; i < raw->count; i++){
             hash = update_process(hash, raw->pid[i]);
         }

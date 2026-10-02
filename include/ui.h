@@ -4,7 +4,7 @@
 
 #include <ncurses.h>
 
-void handle_scroll_input(int ch, int* offset, int total, int visible, int* select, int process_count);
+void handle_scroll_input(int ch, int* offset, int count, int visible, int* select);
 
 void scroll_window(int total, int visible, int offset, int bar_height, int start_row);
 

@@ -229,16 +229,14 @@ void free_hash(Hash* hash){
     free(hash);
 }
 
-int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int select, int ch, int* k){
-    int virtual_row = start_row;
+int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset, int visible, int select, int ch, int* k){
     int max_len = COLS > 1 ? COLS - 1 : 0;
     char line[512];
 
-
-    for (int i = 0; i < list_pid->count; i++){
+    for (int i = offset; i < list_pid->count && i < offset + visible; i++){
         Process* data = find_process(hash, list_pid->pid[i]);
-        int screen_row = virtual_row - offset;
-        if (data != NULL && screen_row >= 0 && screen_row < LINES){
+        int screen_row = start_row + (i - offset);
+        if (data != NULL){
             snprintf(line, sizeof(line),
                 "PID: %d, Name: %s, State: %c, PPID: %d, User Time: %lld, Kernel Time: %lld, Threads: %d, RSS: %lld, Last CPU: %d",
                 data->pid, data->name, data->state, data->ppid, data->user_time, data->kernel_time,
@@ -250,10 +248,8 @@ int print_process_info(Hash* hash, PidList* list_pid, int start_row, int offset,
         if (i == select && ch == KEY_DC) {
             *k = (kill(list_pid->pid[i], SIGTERM) == 0) ? 0 : errno;
         }
-        virtual_row++;
     }
-
-    return virtual_row - start_row;
+    return visible;
 }
 
 
